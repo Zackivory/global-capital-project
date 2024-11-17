@@ -1,1 +1,3 @@
 tushare
+openai
+pymilvus
