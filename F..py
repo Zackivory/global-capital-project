@@ -9,6 +9,8 @@ import configparser
 import pandas as pd
 import time
 import random
+
+from numpy.matlib import empty
 from openai import OpenAI
 from pymilvus import connections, utility
 from pymilvus import Collection, DataType, FieldSchema, CollectionSchema
@@ -25,7 +27,13 @@ def embed_with_tokens(text):
     print(total_tokens)
     return embedding, total_tokens
 
-
+def update_status_in_sqlite(df):
+    conn = sqlite3.connect('news_data.db')
+    c = conn.cursor()
+    for index, row in df.iterrows():
+        c.execute('''UPDATE news SET is_inserted_to_zilliz = ? WHERE id = ?''', (True, row['id']))
+    conn.commit()
+    conn.close()
 def add_to_zilliz(collection_name, df):
     """
     :param collection_name: The name of the collection to be created or reset(should be ai_name with _to replace space)
@@ -80,6 +88,9 @@ def add_to_zilliz(collection_name, df):
     df = df.drop(columns=['is_inserted_to_zilliz'])
     df = df.dropna(subset=['content_embedding'])
     df = df.fillna('')
+    if df.empty:
+        connections.disconnect("default")
+        return df
     print(df)
     for index, row in df.iterrows():
         content_embedding = json.loads(row['content_embedding'])
@@ -107,7 +118,7 @@ def add_to_zilliz(collection_name, df):
     t1 = time.time()
     print(f"Succeed in {round(t1 - t0, 4)} seconds!")
     connections.disconnect("default")
-    return total_token_count
+    return df
 
 
 if __name__ == '__main__':
@@ -119,13 +130,14 @@ if __name__ == '__main__':
 
     # Read 100 lines at a time from the news table
     offset = 0
-    batch_size = 100
+    batch_size = 1000
     while True:
         query = f"SELECT * FROM news LIMIT {batch_size} OFFSET {offset}"
         df = pd.read_sql_query(query, conn)
         if df.empty:
             break
-        add_to_zilliz(collection_name, df)
+        added_df=add_to_zilliz(collection_name, df)
+        update_status_in_sqlite(added_df)
         offset += batch_size
 
     # Close the connection
