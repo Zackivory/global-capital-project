@@ -1,6 +1,7 @@
 """
 get batch result and save into batch_output folder
 """
+
 # Read the job_ids from the job_ids.json file
 import json
 from openai import OpenAI
