@@ -13,7 +13,7 @@ pro = ts.pro_api(token=ts_token)
 sources = ['sina', 'wallstreetcn', '10jqka', 'eastmoney', 'yuncaijing', 'fenghuang', 'jinrongjie']
 
 # Define the date range for historical data
-start_date = datetime.datetime(2023,11, 15)  # Example start date
+start_date = datetime.datetime(2018,11, 15)  # Example start date
 end_date = datetime.datetime(2024, 11, 15)  # Example end date
 
 # # Generate a list of trading days
