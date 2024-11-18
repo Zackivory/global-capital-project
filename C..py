@@ -1,12 +1,12 @@
 """
 create batch jobs from news_data.db
-call openai embedding batch api 
-append the embedding results to news_data.db
+call openai embedding batch api
 """
 import os
 import json
 import pandas as pd
 import sqlite3
+from openai import OpenAI
 
 # Check if the data folder exists, else create it
 def check_and_create_folder(folder_path):
@@ -32,7 +32,7 @@ conn.close()
 
 # Step 2: Create batch files
 # Create the batch files
-batch_size = 20000
+batch_size = 100
 batch_file = df.copy()
 batch_file_name = 'news_data_batch'
 num_files = len(batch_file) // batch_size + 1
@@ -47,15 +47,16 @@ for num_file in range(num_files):
     with open(output_file, 'a') as file:
         for index, row in batch_file.iloc[batch_size*num_file : min(batch_size*(num_file+1), len(batch_file))].iterrows():
             payload = {
-                "custom_id": f"custom_id_{row['id']}",
+                "custom_id": row['id'],
                 "method": "POST",
                 "url": "/v1/embeddings",
                 "body": {
                     "input": row["content"],
                     "model": "text-embedding-3-large",
                     "encoding_format": "float",
-                    'dimensions': 3072
+                    "dimensions": 3072
                 }
+    
             }
             file.write(json.dumps(payload) + '\n')
 
@@ -63,3 +64,11 @@ for num_file in range(num_files):
     with open(output_file, 'r') as file:
         for line in file.readlines()[:2]:
             print(line)
+
+
+
+
+
+
+if __name__ == '__main__':
+    print()

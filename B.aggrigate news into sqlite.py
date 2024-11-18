@@ -46,7 +46,9 @@ if __name__ == '__main__':
                                 datetime TEXT,
                                 source TEXT,
                                 title TEXT,
-                                content TEXT
+                                content TEXT,
+                                content_embedding BLOB,
+                                is_inserted_to_zilliz BOOLEAN DEFAULT FALSE
                             )
                             ''')
 
@@ -58,9 +60,9 @@ if __name__ == '__main__':
                                 # Create a unique ID by combining the date part of the file name and the id from the CSV
                                 unique_id = f"{date_part}_{row['id']}"
                                 cursor.execute('''
-                                INSERT INTO news (id, datetime, source, title, content)
-                                VALUES (?, ?, ?, ?, ?)
-                                ''', (unique_id, row['datetime'], row['source'], row['title'], row['content']))
+                                INSERT INTO news (id, datetime, source, title, content, content_embedding, is_inserted_to_zilliz)
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                                ''', (unique_id, row['datetime'], row['source'], row['title'], row['content'], None, False))
 
                             # Commit the transaction
                             conn.commit()

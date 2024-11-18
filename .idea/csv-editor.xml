@@ -3,63 +3,14 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\news_all_sources_20231115.csv">
+        <entry key="\batch_output\file-ISsRMozJc0RBxZ42RsgSxWWj.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\news_all_sources_20231116.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\news_data\2023\11\news_all_sources_20231115.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\news_data\2023\11\news_all_sources_20231116.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\news_data\2023\11\news_all_sources_20231122.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\news_data\2023\11\news_all_sources_20231125.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\news_data\2023\11\news_all_sources_20231127.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\news_data\2023\11\news_all_sources_20231128.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\news_data\2024\04\news_all_sources_20240404.csv">
+        <entry key="\batch_output\file-iMUVVo4ash0hFj5wes4YTwN2.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

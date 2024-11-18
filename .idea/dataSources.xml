@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="news_data" uuid="1094f978-4fa2-49cc-9729-80927dc00df6">
+    <data-source source="LOCAL" name="news_data" uuid="6cf2561d-f8ab-4190-b22e-ddb580d07b26">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:C:\Users\Zhekai Pan\PycharmProjects\global_capital market\news_data.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:H:\pycharmproject\global_capital market\news_data.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
       <libraries>
         <library>
