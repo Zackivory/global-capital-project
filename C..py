@@ -32,7 +32,7 @@ conn.close()
 
 # Step 2: Create batch files
 # Create the batch files
-batch_size = 100
+batch_size = 10000
 batch_file = df.copy()
 batch_file_name = 'news_data_batch'
 num_files = len(batch_file) // batch_size + 1
@@ -52,9 +52,9 @@ for num_file in range(num_files):
                 "url": "/v1/embeddings",
                 "body": {
                     "input": row["content"],
-                    "model": "text-embedding-3-large",
+                    "model": "text-embedding-3-small",
                     "encoding_format": "float",
-                    "dimensions": 3072
+                    "dimensions": 1536
                 }
     
             }

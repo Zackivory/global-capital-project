@@ -1,0 +1,6 @@
+"""
+if some batch failed use the command below to clear the job_id
+"""
+UPDATE batch_jobs
+SET job_id = NULL
+WHERE is_downloaded = FALSE

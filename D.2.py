@@ -4,11 +4,26 @@ get batch result and save into batch_output folder
 
 # Read the job_ids from the job_ids.json file
 import json
+import os
+
 from openai import OpenAI
 import pandas as pd
 import time
-with open('job_ids.json', 'r') as f:
-    job_ids = json.load(f)
+import sqlite3
+
+# Connect to SQLite database
+db_path = os.path.join(os.getcwd(), "news_data.db")
+conn = sqlite3.connect(db_path)
+cursor = conn.cursor()
+
+# Get undownloaded job_ids from the table
+cursor.execute('''
+SELECT job_id FROM batch_jobs WHERE is_downloaded = FALSE AND job_id IS NOT NULL
+''')
+job_ids = [row[0] for row in cursor.fetchall()]
+
+# Close the database connection
+
 client = OpenAI()
 fail_flag = False
 finished = set()
@@ -40,36 +55,38 @@ for job_id in job_ids:
     job = client.batches.retrieve(job_id)
     print(f'{job.request_counts.failed}/{job.request_counts.total} requests failed in job {job_id}')
 
-# Step 5: Download the output files
-# Extract the output file ids
-output_files_ids = []
-for job_id in job_ids:
-    output_files_ids.append(client.batches.retrieve(job_id).output_file_id)
-
-# Read the output files
-output_files = []
-for output_file_id in output_files_ids:
-    output_file = client.files.content(output_file_id).text
-    output_files.append((output_file_id, output_file))
-
-# Extract the id and embedding
-import os
-
 # Create batch_output folder if it does not exist
 if not os.path.exists('batch_output'):
     os.makedirs('batch_output')
 
-for file_id, file_content in output_files:
-    print(file_id)
-    embedding_results = []
-    for line in file_content.split('\n')[:-1]:
-        data = json.loads(line)
 
+# Download the output files one by one
+for job_id in job_ids:
+
+    job = client.batches.retrieve(job_id)
+    output_file_id = job.output_file_id
+    output_file = client.files.content(output_file_id).text
+
+    # Extract the id and embedding
+    embedding_results = []
+    for line in output_file.split('\n')[:-1]:
+        data = json.loads(line)
         id = data.get('custom_id')  # Use 'id' instead of 'custom_id'
         embedding = data['response']['body']['data'][0]['embedding']
         embedding_results.append([id, embedding])
-    embedding_results = pd.DataFrame(embedding_results, columns=['id', 'embedding'])
-    embedding_results.to_csv(f'./batch_output/{file_id}.csv', index=False)
 
+    # Save the embeddings to a CSV file
+    embedding_results_df = pd.DataFrame(embedding_results, columns=['id', 'embedding'])
+    embedding_results_df.to_csv(f'./batch_output/{job_id}.csv', index=False)
+
+    # Mark the job as downloaded
+    cursor.execute('''
+    UPDATE batch_jobs
+    SET is_downloaded = TRUE
+    WHERE job_id = ?
+    ''', (job_id,))
+    conn.commit()
+    
+conn.close()
 if __name__ == '__main__':
     print()

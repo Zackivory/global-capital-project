@@ -3,14 +3,21 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\batch_output\file-ISsRMozJc0RBxZ42RsgSxWWj.csv">
+        <entry key="\batch_jobs.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\batch_output\file-iMUVVo4ash0hFj5wes4YTwN2.csv">
+        <entry key="\debug.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\result.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

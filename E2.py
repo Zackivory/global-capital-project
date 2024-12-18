@@ -1,6 +1,10 @@
 """
-read from
+create a table of the name of output in the batch_output folder, keep track whether is already enter into zilliz
+for all output in batch_output, use id to get related info from news table, joint into a df and upload to zilliz
+
 """
+import os
+import sqlite3
 import json
 import sqlite3
 import pandas as pd
@@ -15,25 +19,10 @@ from openai import OpenAI
 from pymilvus import connections, utility
 from pymilvus import Collection, DataType, FieldSchema, CollectionSchema
 
-client = OpenAI()
 
-def embed_with_tokens(text):
-    response = client.embeddings.create(
-        input=text,
-        model='text-embedding-3-large'
-    )
-    embedding = response.data[0].embedding
-    total_tokens = response.usage.total_tokens
-    print(total_tokens)
-    return embedding, total_tokens
 
-def update_status_in_sqlite(df):
-    conn = sqlite3.connect('news_data.db')
-    c = conn.cursor()
-    for index, row in df.iterrows():
-        c.execute('''UPDATE news SET is_inserted_to_zilliz = ? WHERE id = ?''', (True, row['id']))
-    conn.commit()
-    conn.close()
+
+
 def add_to_zilliz(collection_name, df):
     """
     :param collection_name: The name of the collection to be created or reset(should be ai_name with _to replace space)
@@ -61,14 +50,14 @@ def add_to_zilliz(collection_name, df):
     check_collection = utility.has_collection(collection_name)
 
     # create a collection with customized primary field: book_id_field
-    dim = 3072
+    dim = 1536
     fields = [
         FieldSchema(name='id', dtype=DataType.INT64, is_primary=True, auto_id=True),
         FieldSchema(name='sqlite_id', dtype=DataType.VARCHAR, max_length=2048),
         FieldSchema(name='datetime', dtype=DataType.VARCHAR, max_length=2048),
         FieldSchema(name='source', dtype=DataType.VARCHAR, max_length=2048),
         FieldSchema(name='title', dtype=DataType.VARCHAR, max_length=2048),
-        FieldSchema(name='content', dtype=DataType.VARCHAR, max_length=2048),
+        FieldSchema(name='content', dtype=DataType.VARCHAR, max_length=8192),
         FieldSchema(name='content_embedding', dtype=DataType.FLOAT_VECTOR, dim=dim)
     ]
     schema = CollectionSchema(fields, description='personal_qa')
@@ -120,27 +109,74 @@ def add_to_zilliz(collection_name, df):
     connections.disconnect("default")
     return df
 
+# Connect to the SQLite database
+conn = sqlite3.connect('news_data.db')
+cursor = conn.cursor()
 
+# Create a table to keep track of batch output files and their status
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS batch_output_files (
+    file_name TEXT PRIMARY KEY,
+    is_inserted_to_zilliz BOOLEAN DEFAULT FALSE
+)
+''')
+conn.commit()
+
+# Get the list of files in the batch_output folder
+batch_output_folder = 'batch_output'
+batch_files = os.listdir(batch_output_folder)
+
+# Insert the batch output files into the table if they are not already present
+for file in batch_files:
+    cursor.execute('''
+    INSERT OR IGNORE INTO batch_output_files (file_name)
+    VALUES (?)
+    ''', (file,))
+conn.commit()
+
+# Close the database connection
+conn.close()
+
+import json
+import pandas as pd
+
+# Connect to the SQLite database
+conn = sqlite3.connect('news_data.db')
+cursor = conn.cursor()
+
+
+# Process each batch output file
+for file in batch_files:
+    print(file)
+    if file.endswith('.csv'):
+        file_path = os.path.join(batch_output_folder, file)
+        df = pd.read_csv(file_path)
+        
+        # Get related info from the news table
+        ids = tuple(df['id'].tolist())
+        query = f"SELECT * FROM news WHERE id IN ({','.join(['?']*len(ids))})"
+        news_df = pd.read_sql_query(query, conn, params=ids)
+        
+        # Join the dataframes on the 'id' column
+        merged_df = pd.merge(df, news_df, on='id')
+        merged_df = merged_df.drop(columns=['content_embedding'])
+        merged_df.rename(columns={'embedding': 'content_embedding'}, inplace=True)
+        merged_df.to_csv('debug.csv', index=False)
+
+        try:
+            add_to_zilliz(collection_name='news_data', df=merged_df)
+            # Update the status of the batch output file in the database
+            cursor.execute('''
+            UPDATE batch_output_files
+            SET is_inserted_to_zilliz = TRUE
+            WHERE file_name = ?
+            ''', (file,))
+            conn.commit()
+        except Exception as e:
+            print(f"Error processing file {file}: {e}")
+            conn.rollback()
+
+# Close the database connection
+conn.close()
 if __name__ == '__main__':
-    collection_name = 'news_data'
-
-    # Connect to the SQLite database
-    conn = sqlite3.connect('news_data.db')
-    c = conn.cursor()
-
-    # Read 100 lines at a time from the news table
-    offset = 0
-    batch_size = 1000
-    while True:
-        query = f"SELECT * FROM news LIMIT {batch_size} OFFSET {offset}"
-        df = pd.read_sql_query(query, conn)
-        if df.empty:
-            break
-        added_df=add_to_zilliz(collection_name, df)
-        update_status_in_sqlite(added_df)
-        offset += batch_size
-
-    # Close the connection
-    conn.close()
-    import os
-
+    print()

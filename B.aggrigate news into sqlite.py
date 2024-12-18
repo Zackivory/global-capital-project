@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     total_token_count = 0
     db_path = os.path.join(os.getcwd(), "news_data.db")
-    for root, dirs, files in os.walk('news_data'):
+    for root, dirs, files in os.walk('H:\\news_data'):
         for file in files:
             if file.endswith(".csv"):
                 file_path = os.path.join(root, file)
@@ -36,36 +36,41 @@ if __name__ == '__main__':
                         date_part = os.path.basename(file_path).split('_')[-1].split('.')[0]
 
                         # Connect to SQLite database (or create it if it doesn't exist)
-                        with sqlite3.connect(db_path) as conn:
-                            cursor = conn.cursor()
+                        try:
+                            with sqlite3.connect(db_path) as conn:
+                                cursor = conn.cursor()
 
-                            # Create table if it doesn't exist
-                            cursor.execute('''
-                            CREATE TABLE IF NOT EXISTS news (
-                                id TEXT PRIMARY KEY,
-                                datetime TEXT,
-                                source TEXT,
-                                title TEXT,
-                                content TEXT,
-                                content_embedding BLOB,
-                                is_inserted_to_zilliz BOOLEAN DEFAULT FALSE
-                            )
-                            ''')
-
-                            # Read the CSV file into a DataFrame
-                            df = pd.read_csv(file_path)
-
-                            # Insert data into the SQLite database
-                            for _, row in df.iterrows():
-                                # Create a unique ID by combining the date part of the file name and the id from the CSV
-                                unique_id = f"{date_part}_{row['id']}"
+                                # Create table if it doesn't exist
                                 cursor.execute('''
-                                INSERT INTO news (id, datetime, source, title, content, content_embedding, is_inserted_to_zilliz)
-                                VALUES (?, ?, ?, ?, ?, ?, ?)
-                                ''', (unique_id, row['datetime'], row['source'], row['title'], row['content'], None, False))
+                                CREATE TABLE IF NOT EXISTS news (
+                                    id TEXT PRIMARY KEY,
+                                    datetime TEXT,
+                                    source TEXT,
+                                    title TEXT,
+                                    content TEXT,
+                                    content_embedding BLOB,
+                                    is_inserted_to_zilliz BOOLEAN DEFAULT FALSE
+                                )
+                                ''')
 
-                            # Commit the transaction
-                            conn.commit()
+                                # Read the CSV file into a DataFrame
+                                df = pd.read_csv(file_path)
+
+                                # Insert data into the SQLite database
+                                for _, row in df.iterrows():
+                                    # Create a unique ID by combining the date part of the file name and the id from the CSV
+                                    unique_id = f"{date_part}_{row['id']}"
+                                    cursor.execute('''
+                                    INSERT INTO news (id, datetime, source, title, content, content_embedding, is_inserted_to_zilliz)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                                    ''', (unique_id, row['datetime'], row['source'], row['title'], row['content'], None, False))
+
+                                # Commit the transaction
+                                conn.commit()
+                        except Exception as e:
+                            conn.rollback()
+                            print(f"Error processing file {file_path}: {e}")
+                            raise
                         print(f"Processed file: {file_path}")
 
                         mark_file_as_processed(file_path)

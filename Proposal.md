@@ -1,4 +1,4 @@
-
+   
 # Project Proposal: Predicting Stock Market Performance Using Financial News
 
 ## 1. Summary

@@ -61,5 +61,12 @@
         </library>
       </libraries>
     </data-source>
+    <data-source source="LOCAL" name="stock_data.db" uuid="7215cb48-ba7d-45f4-bc6f-b10499c9aaca">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/stock_data.db</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
